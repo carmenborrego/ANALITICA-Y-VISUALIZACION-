@@ -1,0 +1,171 @@
+#PRACTICAS 1 Y 2 DEL TERCER PARCIAL DE ANALITICA
+
+import numpy as np
+import matplotlib.pyplot as plt
+x_simple = np.array([-2, -1, 0, 1, 2])
+y_simple = np.array([4, 1, 3, 2, 0])
+my_rho = np.corrcoef(x_simple, y_simple)
+
+print(my_rho)
+
+#EL ARGUMENTO PARA RANDOMSTATE ES EL SEED QUE HAYAMOS FIJADO 
+seed = 13
+rand = np.random.RandomState(seed)
+
+x = rand.uniform(0,1,100)
+x = np.vstack((x,x*2+1))
+x = np.vstack((x,-x[0,]*2+1))
+x = np.vstack((x,rand.normal(1,3,100)))
+
+rho = np.corrcoef(x)
+
+fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 3))
+for i in [0,1,2]:
+    ax[i].scatter(x[0,],x[1+i,])
+    ax[i].title.set_text('Correlation = ' + "{:.2f}".format(rho[0,i+1]))
+    ax[i].set(xlabel='x',ylabel='y')
+fig.subplots_adjust(wspace=.4)    
+plt.show()
+
+
+#PRÁCTICA 3
+#RANGO 
+import numpy as np
+import scipy.stats
+x = np.arange(10, 20)
+y = np.array([2, 1, 4, 5, 8, 12, 18, 25, 96, 48])
+z = np.array([5, 3, 2, 1, 0, -2, -8, -11, -15, -16])
+
+scipy.stats.rankdata(x)
+scipy.stats.rankdata(y)
+scipy.stats.rankdata(z)
+
+#rankdata() tiene la opción de incluir method como argumento 
+#adicional para decirle a Python que hacer cuando hay empates 
+# en el array 
+scipy.stats.rankdata([8, 2, 0, 2])
+#en este caso tenemos 2 valores de 2 
+#el valor 0 tiene rango de 1 y el valor 8 tiene rango de 4 
+#entonces los dos elementos con el valor 2 recibirán el mismo 
+#rango 2.5 
+
+#rankdata() trata los valones nan como si fueran grandes
+scipy.stats.rankdata([8, np.nan, 0, 2])
+#en este caso, el valor np.nan trendrá el mayor rango 4 
+
+#los rangos también se pueden obtener con np.argsort()
+np.argsort(y) + 1
+#da como resultados los índices que tendrían los elementos del array 
+#en el array "surtidio" 
+np.argsort(y) + 1
+
+#correlación de rango con numpy y scipy 
+#el coeficiente de correlación de spearma n se puede calcular 
+#scipy.stats.spearmanr()
+result = scipy.stats.spearmanr(x, y)
+result
+
+result.correlation
+
+result.pvalue
+
+rho, p = scipy.stats.spearmanr(x, y)
+rho
+p
+
+#se puede tener el mismo resultado 
+#si se hacen los arrays +
+xy = np.array([[10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+               [2, 1, 4, 5, 8, 12, 18, 25, 96, 48]])
+rho, p = scipy.stats.spearmanr(xy, axis=1)
+rho
+
+p
+
+#PRACTICA 4 KENALL TAU
+result = scipy.stats.kendalltau(x, y)
+result
+
+result.correlation
+
+result.pvalue
+
+tau, p = scipy.stats.kendalltau(x, y)
+tau
+
+p
+
+#práctica 5 correlacion con pandas
+import pandas as pd
+x, y, z = pd.Series(x), pd.Series(y), pd.Series(z)
+xy = pd.DataFrame({'x-values': x, 'y-values': y})
+xyz = pd.DataFrame({'x-values': x, 'y-values': y, 'z-values': z})
+#spearman
+x.corr(y, method='spearman')
+xy.corr(method='spearman')
+xyz.corr(method='spearman')
+xy.corrwith(z, method='spearman')
+
+#kendall
+x.corr(y, method='kendall')
+xy.corr(method='kendall')
+xyz.corr(method='kendall')
+xy.corrwith(z, method='kendall')
+
+#visualización 
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+import numpy as np
+import scipy.stats
+x = np.arange(10, 20)
+y = np.array([2, 1, 4, 5, 8, 12, 18, 25, 96, 48])
+z = np.array([5, 3, 2, 1, 0, -2, -8, -11, -15, -16])
+xyz = np.array([[10, 11, 12, 13, 14, 15, 16, 17, 18, 19],[2, 1, 4, 5, 8, 12, 18, 25, 96, 48],[5, 3, 2, 1, 0, -2, -8, -11, -15, -16]])
+
+#x y y con linea de regresióni 
+slope, intercept, r, p, stderr = scipy.stats.linregress(x, y)
+line = f'Regression line: y={intercept:.2f}+{slope:.2f}x, r={r:.2f}'
+line
+fig, ax = plt.subplots()
+ax.plot(x, y, linewidth=0, marker='s', label='Data points')
+ax.plot(x, intercept + slope * x, label=line)
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.legend(facecolor='white')
+plt.show()
+
+#MAPA DE CALOR PARA MATRICES DE CORRELACIO´N 
+corr_matrix = np.corrcoef(xyz).round(decimals=2)
+corr_matrix
+fig, ax = plt.subplots()
+im = ax.imshow(corr_matrix)
+im.set_clim(-1, 1)
+ax.grid(False)
+ax.xaxis.set(ticks=(0, 1, 2), ticklabels=('x', 'y', 'z'))
+ax.yaxis.set(ticks=(0, 1, 2), ticklabels=('x', 'y', 'z'))
+ax.set_ylim(2.5, -0.5)
+for i in range(3):
+    for j in range(3):
+        ax.text(j, i, corr_matrix[i, j], ha='center', va='center',
+                color='r')
+cbar = ax.figure.colorbar(im, ax=ax, format='% .2f')
+plt.show()
+
+import os 
+paquete=input('qué paquete instalamos')
+paquete=str(paquete)
+while True:
+    try: 
+        codigo='pip install'+ paquete
+        os.system(codigo)
+        print ('paquete instalado')
+    except:
+            print('error al instalar paquete')
+    continuar=input('quieres instalar otro?')
+    continuar=str(continuar)
+    if continuar=='S' or continuar=='s' or continuar=='si' or continuar=='SI':
+        paquete=input('qué paquete instalamos')
+        paquete=str(paquete)
+    else:
+        break
+print('fin')
